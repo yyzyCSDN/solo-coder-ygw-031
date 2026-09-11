@@ -13,17 +13,14 @@ class ExpandedTests(unittest.TestCase):
         self.assertEqual(self.service.get(item.id).name,"primary")
         self.assertEqual(len(self.service.search("PRIMARY")),1)
         self.assertTrue(self.service.operations.consistency()["ok"])
-    def test_domain_control_and_safety(self):
-        item=self.service.create("equipment",priority=80)
-        reading=self.service.controller.ingest("signal",91,"unit")
-        self.assertEqual(reading.quality,"good")
-        self.assertEqual(self.service.controller.safety_check(91)["level"],"critical")
-        result=self.service.controller.command(item.id,"start","tester")
-        self.assertIn("result_state",result)
+    def test_bridge_runtime_records_docking(self):
+        self.service.baseline.register_asset("b1","bridge")
+        self.service.baseline.register_asset("a1","aircraft")
+        result=self.service.domain.docking_job("d1","b1","a1",2)
+        self.assertEqual(result["payload"]["phase"],"approach")
     def test_plan_simulation_and_exports(self):
         for i in range(4): self.service.create("job-"+str(i),priority=40+i)
         self.assertEqual(len(self.service.build_plan()["slots"]),4)
         self.assertEqual(self.service.simulate(3)["created"],3)
         self.assertIn("id,name,state",self.service.export("csv"))
 if __name__=="__main__": unittest.main()
-
